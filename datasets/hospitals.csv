@@ -1,0 +1,11 @@
+Hospital,Latitude,Longitude,ICU_Beds,Trauma_Center,Emergency_Staff
+Government General Hospital,16.5062,80.6480,120,Yes,80
+NRI Hospital,16.5415,80.5150,90,Yes,70
+Andhra Hospital,16.5148,80.6400,60,Yes,50
+Ramesh Hospital,16.5068,80.6488,70,Yes,60
+Sentini Hospital,16.4895,80.6898,50,No,40
+Manipal Hospital Vijayawada,16.5200,80.6300,100,Yes,75
+Care Hospital Vijayawada,16.5105,80.6355,85,Yes,65
+Vijaya Super Speciality Hospital,16.5155,80.6200,55,Yes,45
+Sai Super Speciality Hospital,16.5035,80.6505,40,No,35
+Praveen Hospital,16.4998,80.6408,45,No,30
