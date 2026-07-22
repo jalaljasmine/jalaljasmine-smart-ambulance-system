@@ -108,11 +108,22 @@ def recommend_optimal_hospital(hospitals_tab, live_network, ambulance_current_no
     all_results_list = []
     all_graph_nodes = list(live_network.nodes())
     
+    # Geographically-spread mapping linking real hospital metrics to spread-out spatial node IDs
+    hospital_node_mapping = {
+        'Government General Hospital': "571470125",
+        'NRI Hospital': "660699662",
+        'Andhra Hospital': "660699683",
+        'Ramesh Hospital': "1880441490",
+        'Manipal Hospital Vijayawada': "660700031",
+        'Care Hospital Vijayawada': "708920890",
+        'Vijaya Super Speciality Hospital': "1880441510",
+    }
+    
     print("\n[RECOMMENDER] Matrix Lookup Active. Commencing complete multi-path computation routing...")
     
     for idx, row in candidate_hospitals.iterrows():
-        target_pool = ["660699662", "660699683", "708920890", "1880441490"]
-        mock_target_node = target_pool[idx % len(target_pool)]
+        h_name = row['Hospital']
+        mock_target_node = hospital_node_mapping.get(h_name, all_graph_nodes[0])
         
         if mock_target_node not in all_graph_nodes:
             mock_target_node = all_graph_nodes[idx % len(all_graph_nodes)]
@@ -123,10 +134,10 @@ def recommend_optimal_hospital(hospitals_tab, live_network, ambulance_current_no
             total_time = 0
             for i in range(len(route)-1):
                 edge_dict = live_network.get_edge_data(route[i], route[i+1])
+                # FIX: Extract the integer item by position zero index [0] to keep it hashable
                 first_key = list(edge_dict.keys())[0]
                 total_time += edge_dict[first_key]['dynamic_cost']
                 
-            # Log every single computed path scenario instead of filtering early
             all_results_list.append({
                 'Hospital': row['Hospital'],
                 'Beds': row['ICU_Beds'],
@@ -140,7 +151,6 @@ def recommend_optimal_hospital(hospitals_tab, live_network, ambulance_current_no
         except nx.NetworkXNoPath:
             continue
             
-    # Sort entire dataset array by absolute fastest travel time window
     leaderboard = pd.DataFrame(all_results_list).sort_values(by='Time_Sec').reset_index(drop=True)
     return leaderboard
 
@@ -151,7 +161,8 @@ print(f"\n[SYSTEM] Querying environmental register for timestamp: {target_simula
 matched_weather_row = weather_registry[weather_registry['DateTime'] == target_simulation_timestamp]
 
 if not matched_weather_row.empty:
-    live_weather_condition = str(matched_weather_row['Weather_State'].values[0])
+    # FIX: Extract the text string using .iloc[0] to drop the string array object formatting completely
+    live_weather_condition = str(matched_weather_row['Weather_State'].iloc[0]).strip()
 else:
     live_weather_condition = "Clear"
 
@@ -162,14 +173,19 @@ month_val = ts.month
 weekday_val = ts.weekday()
 
 all_nodes_list = list(G.nodes())
-ambulance_start = "660700040" if "660700040" in all_nodes_list else all_nodes_list[0]
 
-# Generate routing costs layer matrix layout
+# =========================================================================
+# 📍 TEST LOCATION CONFIGURATION 
+# Toggle between "571470125" (East Side) and "660700040" (West Side)
+# =========================================================================
+ambulance_start = "660700040" if "660700040" in all_nodes_list else all_nodes_list
+
+# Generate routing costs layer
 live_city_traffic = generate_predictive_network_fast(
     G, hour=hour_val, day=day_val, month=month_val, weekday=weekday_val, current_weather=live_weather_condition
 )
 
-# Fetch sorted multi-output data registry matrix
+# Fetch sorted data matrix layout
 results_dataframe = recommend_optimal_hospital(
     hospitals_df, live_city_traffic, ambulance_current_node=ambulance_start, patient_severity="High"
 )
